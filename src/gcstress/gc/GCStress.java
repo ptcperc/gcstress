@@ -470,9 +470,6 @@ class GCHammer implements Runnable
   public void run()
   {
     Random rand = new Random();
-    long last_nanos = System.nanoTime();
-    long this_nanos = 0;
-    long count = 0;
     while (!stop)
     {
       int key = rand.nextInt(capacity);
@@ -488,23 +485,6 @@ class GCHammer implements Runnable
         // otherwise, remove it
         val = (byte[])map.remove(key);
       }
-      this_nanos = System.nanoTime();
-      if (this_nanos - last_nanos > 5000000000L)
-      {
-        last_nanos = this_nanos;
-        System.err.println("count="+count);
-        /*
-        try
-        {
-          Thread.sleep(1000);
-        }
-        catch (InterruptedException e)
-        {
-        }
-        */
-      }
-      count++;
-
     }
   }
 }
