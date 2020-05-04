@@ -1,0 +1,119 @@
+<project name="gcstress" basedir="." default="main">
+  <description>
+    This file is used to build the gcstress project. Gcstress measures 
+    the response delay during timed sleeps while stressing the garbage 
+    collector of a Java Virtual Machine. Gcstress generates a CSV file 
+    with the data samples. The GCDelayGraph program generates a JPG file 
+    from the CSV file.
+  </description>
+
+  <property name="gcstress.vers"     value="1.1.0"/>
+  <property name="release.dir"       value="gcstress-${gcstress.vers}"/>
+  <property name="release.file"      value="${release.dir}.tar.gz"/>
+
+  <property name="top.dir"           value="."/>
+  <property name="src.dir"           value="src"/>
+  <property name="images.dir"        value="images"/>
+
+  <property name="build.dir"         value="build"/>
+  <property name="classes.dir"       value="${build.dir}/classes"/>
+  <property name="jar.dir"           value="${build.dir}/lib"/>
+  <property name="deploy.dir"        value="${build.dir}/deploy/${release.dir}"/>
+  <property name="lib.dir"           value="lib"/>
+
+  <property name="jfree.vers"        value="1.5.0"/>
+  <property name="jfreechart.jar"   value="jfreechart-${jfree.vers}.jar"/>
+  <property name="jcomm.vers"        value="1.0.24"/>
+  <property name="jcommon.jar"      value="jcommon-${jcomm.vers}.jar"/>
+
+  <property name="gc-main-class" value="gcstress.gc.GCStress"/>
+  <property name="gc-graph-class" value="gcstress.gc.GCDelayGraph"/>
+
+  <path id="gcstress.build.classpath">
+    <pathelement location="${jar.dir}/${jfreechart.jar}"/>
+    <pathelement location="${jar.dir}/${jcommon.jar}"/>
+  </path>
+
+  <pathconvert property="manifest.classpath" pathsep=" " refid="gcstress.build.classpath">
+    <flattenmapper/>
+  </pathconvert>
+
+  <target name="clean" description="remove build artifacts">
+    <delete dir="${build.dir}"/>
+    <delete file="${release.file}"/>
+  </target>
+
+  <target name="getdeps" description="get freechart jars">
+    <mkdir dir="${jar.dir}"/>
+    <get src="https://repo1.maven.org/maven2/org/jfree/jfreechart/${jfree.vers}/${jfreechart.jar}" dest="${jar.dir}"/>
+    <get src="https://repo1.maven.org/maven2/org/jfree/jcommon/${jcomm.vers}/${jcommon.jar}" dest="${jar.dir}"/>
+    <get src="https://www.gnu.org/licenses/lgpl-3.0.txt" dest="${jar.dir}"/>
+  </target>
+
+  <target name="compile" depends="getdeps" description="compile Java sources">
+    <mkdir dir="${classes.dir}"/>
+    <javac
+      source="1.8" 
+      target="1.8" 
+      includeantruntime="false" 
+      srcdir="${src.dir}" 
+      destdir="${classes.dir}">
+      <classpath refid="gcstress.build.classpath"/>
+    </javac>
+  </target>
+
+  <target name="jar" depends="compile" description="create gcstress jars">
+    <jar destfile="${jar.dir}/gcstress.jar">
+      <fileset dir="${classes.dir}">
+        <include name="gcstress/gc/GCStress.class"/>
+        <include name="gcstress/gc/GCHammer.class"/>
+        <include name="gcstress/gc/LinkedHashMapWithCapacity.class"/>
+      </fileset>
+      <manifest>
+          <attribute name="Main-Class" value="${gc-main-class}"/>
+      </manifest>
+    </jar>
+    <jar destfile="${jar.dir}/gcgraph.jar">
+      <fileset dir="${classes.dir}">
+        <include name="gcstress/gc/GCDelayGraph.class"/>
+        <include name="gcstress/gc/CSVData.class"/>
+        <include name="gcstress/gc/CSVSample.class"/>
+      </fileset>
+      <manifest>
+        <attribute name="Main-Class" value="${gc-graph-class}"/>
+        <attribute name="Class-Path" value="${manifest.classpath}"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="main" depends="clean,jar" description="clean and build"/>
+
+  <target name="release" depends="main" description="main and create release archive">
+    <mkdir dir="${deploy.dir}/${src.dir}"/>
+    <mkdir dir="${deploy.dir}/${lib.dir}"/>
+    <mkdir dir="${deploy.dir}/${images.dir}"/>
+    <copy todir="${deploy.dir}/${src.dir}">
+      <fileset dir="${src.dir}" includes="**"/>
+    </copy>
+    <copy todir="${deploy.dir}/${lib.dir}">
+      <fileset dir="${jar.dir}" includes="**"/>
+    </copy>
+    <copy todir="${deploy.dir}">
+      <fileset dir="${top.dir}">
+        <include name="build.xml"/>
+        <include name="README.md"/>
+        <include name="LICENSE"/>
+      </fileset>
+    </copy>
+    <copy todir="${deploy.dir}/${images.dir}">
+      <fileset dir="${images.dir}" includes="**"/>
+    </copy>
+    <tar compression="gzip" destfile="${release.file}">
+      <tarfileset dir="${deploy.dir}" prefix="${release.dir}"
+        username="root" group="root">
+        <include name="**"/>
+      </tarfileset>
+    </tar>
+  </target>
+
+</project>
