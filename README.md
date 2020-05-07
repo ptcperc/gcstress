@@ -138,7 +138,7 @@ Usage: GCDelayGraph <options>
 You can set the name of the CSV input file, the name of the JPG output file,
 and the width and height of the chart in pixels.
 
-## Running GCStress with PTC Perc Real-Time JVM (separately licensed)
+## Running GCStress with PTC Perc Real-Time JVM (with free demo license)
 
 To run the GCStress demo with PTC Perc, you will need to install
 the pre-built pvm-gcstress binary (requires Linux/x86_64 host). You can
